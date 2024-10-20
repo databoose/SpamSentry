@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [profile.release]
-opt-level = 3
+opt-level = 2
 debug = 0
 
 [profile.dev]
@@ -12,3 +12,5 @@ opt-level = 0
 debug = 1
 
 [dependencies]
+toml = "0.8.19"
+serde = { version = "1.0.210", features = ["derive"] }
