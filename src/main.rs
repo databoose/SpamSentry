@@ -6,7 +6,7 @@ mod config;
 
 use matrix_sdk::{
     Client, config::SyncSettings,
-    ruma::{user_id, events::room::message::SyncRoomMessageEvent},
+    ruma::{user_id, events::room::message::SyncRoomMessageEvent}
 };
 
 #[tokio::main]
@@ -21,9 +21,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
+    
     println!("contents: {}", contents);
-    let config: config::Config = from_str(&contents)?; //accessible struct for config limits
+    let tables: config::Tables = from_str(&contents)?; //accessible struct for limits values
+    println!("{:?}", tables.limits.per_message_tag_limit);
+    println!("{:?}", tables.login.username);
 
     let alice = user_id!("@alice:example.org");
     let client = Client::builder().server_name(alice.server_name()).build().await?;

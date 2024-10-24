@@ -1,0 +1,6 @@
+[limits]
+per_message_tag_limit = 4
+
+[login]
+username = "USERNAME-HERE"
+password = "PASSWORD-HERE"
