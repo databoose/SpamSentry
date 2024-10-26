@@ -16,3 +16,4 @@ toml = "0.8.19"
 serde = { version = "1.0.210", features = ["derive"] }
 tokio = { version = "1.40.0", features = ["rt-multi-thread"] }
 matrix-sdk = "0.7.1"
+url = "2.5.2"
