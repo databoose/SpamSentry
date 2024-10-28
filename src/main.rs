@@ -1,26 +1,32 @@
 use std::fs::OpenOptions;
 use std::io::Read;
+use std::env;
+
+use url::Url;
 use toml::from_str;
+use log_x::{loggers::{ global_logger::DefaultLoggerTrait, log_levels::LogLevel }, 
+                       timestamp, log_info, log_error, log_warn, log_debug, Logger};
 
 mod config;
-
 use matrix_sdk::{
     config::SyncSettings,
     ruma::{
-        api::client::session::get_login_types::v3::{IdentityProvider, LoginType},
         events::room::message::{MessageType, SyncRoomMessageEvent},
     },
     Client, Room, RoomState,
 };
-use url::Url;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Logger::set_log_level(LogLevel::Trace);
+    let path = env::current_dir()?;
     let mut file = match OpenOptions::new().read(true).open("config.toml") {
        Ok(file) => file,
        Err(NotFound) => {
-            println!("Configuration file not found, creating one in directory of executable...");
+            log_info!("Configuration file not found, creating one in directory of executable...");
             config::write_config_defaults()?;
+            log_info!("Configuration file created in : {}", path.display());
+            print!("");
             OpenOptions::new().read(true).open("config.toml")?
         },
     };
@@ -30,6 +36,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tables: config::Tables = from_str(&contents)?; //accessible struct for limits values
     //println!("{:?}", tables.limits.per_message_tag_limit);
     //println!("{:?}", tables.login.username);
+
+    if tables.login.username == "@example-change-me:matrix.org" && 
+       tables.login.password == "PASSWORD-HERE"{
+        println!("a");
+        log_error!("Login credentials in the configuration file {}config.toml are not set, please configure them.", path.display());
+    }
 
     let homeserver_url = Url::parse(&format!("https://{}", tables.login.username.split(':').nth(1).unwrap()))?;
     let client = Client::new(homeserver_url).await?;

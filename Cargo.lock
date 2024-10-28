@@ -6,6 +6,7 @@ version = 3
 name = "SpamSentry"
 version = "0.1.0"
 dependencies = [
+ "log_x",
  "matrix-sdk",
  "serde",
  "tokio",
@@ -1257,6 +1258,12 @@ name = "log"
 version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
+
+[[package]]
+name = "log_x"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bbf305e5faf14e1b8372f4d2ac5a571eaae8eb62eafd0c0e6f60138e530471e"
 
 [[package]]
 name = "macroific"

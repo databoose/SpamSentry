@@ -23,7 +23,7 @@ impl Default for Tables {
     fn default() -> Self {
         Tables {
             login: LoginFields {
-                username: String::from("USERNAME-HERE"),
+                username: String::from("@example-change-me:matrix.org"),
                 password: String::from("PASSWORD-HERE"),
             },
             limits: LimitsFields {
