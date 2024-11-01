@@ -1,6 +1,7 @@
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::env;
+use std::process;
 
 use url::Url;
 use toml::from_str;
@@ -38,14 +39,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //println!("{:?}", tables.login.username);
 
     if tables.login.username == "@example-change-me:matrix.org" && 
-       tables.login.password == "PASSWORD-HERE"{
-        println!("a");
-        log_error!("Login credentials in the configuration file {}config.toml are not set, please configure them.", path.display());
+       tables.login.password == "PASSWORD-HERE" {
+            log_error!("Login credentials in the configuration file {}config.toml are not set, please configure them.", path.display());
+            process::exit(0x0100);
     }
 
     let homeserver_url = Url::parse(&format!("https://{}", tables.login.username.split(':').nth(1).unwrap()))?;
     let client = Client::new(homeserver_url).await?;
-    client.matrix_auth().login_username(&tables.login.username, &tables.login.password).send().await?;
+
+    match client.matrix_auth().login_username(&tables.login.username, &tables.login.password).send().await {
+        Ok(_) => {
+            log_info!("Logged in as {}", &tables.login.username);
+        }
+        
+        Err(error) => {
+            log_error!("{}", error);
+        }
+    }
 
     client.add_event_handler(|ev: SyncRoomMessageEvent| async move {
         println!("Received a message {:?}", ev);
