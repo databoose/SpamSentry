@@ -3,17 +3,18 @@ use std::io::Read;
 use std::env;
 use std::process;
 
+use matrix_sdk::ruma::events::room::message::RoomMessageEvent;
 use url::Url;
 use toml::from_str;
 use log_x::{loggers::{ global_logger::DefaultLoggerTrait, log_levels::LogLevel }, 
                        timestamp, log_info, log_error, log_warn, log_debug, Logger};
 
 mod config;
+mod sync_content;
+
 use matrix_sdk::{
     config::SyncSettings,
-    ruma::{
-        events::room::message::{MessageType, SyncRoomMessageEvent},
-    },
+    ruma::events::room::message::{MessageType, SyncRoomMessageEvent},
     Client, Room, RoomState,
 };
 
@@ -57,8 +58,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    client.add_event_handler(|ev: SyncRoomMessageEvent| async move {
-        println!("Received a message {:?}", ev);
+    client.add_event_handler(|ev: SyncRoomMessageEvent, room: Room| async move {
+        if let SyncRoomMessageEvent::Original(orig) = ev { // gets the Original 
+            if let MessageType::Text(text_content) = orig.content.msgtype {
+                println!("sender: {}", orig.sender.to_string());
+                println!("body: {}", text_content.body);
+            }
+            else {
+                log_error!("SyncRoomMessageEvent::Original doesn't contain a MessageType::Text");
+            }
+        }
+        else {
+            log_error!("message event doesn't have an original, this should never happen.");
+        }
     });
     client.sync(SyncSettings::default()).await?;
     
