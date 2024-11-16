@@ -4,13 +4,15 @@ use std::env;
 use std::process;
 
 use matrix_sdk::ruma::events::room::message::RoomMessageEvent;
+use matrix_sdk::ruma::events::room::name::RoomNameEventContent;
+use matrix_sdk::ruma::events::StaticEventContent;
+
 use url::Url;
 use toml::from_str;
 use log_x::{loggers::{ global_logger::DefaultLoggerTrait, log_levels::LogLevel }, 
                        timestamp, log_info, log_error, log_warn, log_debug, Logger};
 
 mod config;
-mod sync_content;
 
 use matrix_sdk::{
     config::SyncSettings,
@@ -35,13 +37,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    let tables: config::Tables = from_str(&contents)?; //accessible struct for limits values
+    let tables: config::Tables = from_str(&contents)?; //accessible struct for values
     //println!("{:?}", tables.limits.per_message_tag_limit);
     //println!("{:?}", tables.login.username);
+    println!("{:?}", tables.filters.message_filters);
 
     if tables.login.username == "@example-change-me:matrix.org" && 
        tables.login.password == "PASSWORD-HERE" {
-            log_error!("Login credentials in the configuration file {}config.toml are not set, please configure them.", path.display());
+            log_error!("Login credentials in the configuration file {}/config.toml are not set, please configure them.", path.display());
             process::exit(0x0100);
     }
 
@@ -61,8 +64,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     client.add_event_handler(|ev: SyncRoomMessageEvent, room: Room| async move {
         if let SyncRoomMessageEvent::Original(orig) = ev { // gets the Original 
             if let MessageType::Text(text_content) = orig.content.msgtype {
-                println!("sender: {}", orig.sender.to_string());
-                println!("body: {}", text_content.body);
+                log_debug!("Message received\n");
+                log_debug!("Room name : {:?}", room.name().unwrap_or("None (Direct Message)".to_string()));
+                log_debug!("Room ID : {:?},", room.room_id());
+                
+                log_debug!("Sender: {}", orig.sender.to_string());
+                log_debug!("Body: {}", text_content.body);
             }
             else {
                 log_error!("SyncRoomMessageEvent::Original doesn't contain a MessageType::Text");

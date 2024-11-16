@@ -4,12 +4,13 @@ use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
 pub struct Tables { // all config tables
-    pub limits: LimitsFields,
+    pub filters: FilterFields,
     pub login: LoginFields,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct LimitsFields {
+pub struct FilterFields {
+    pub message_filters: Vec<String>,
     pub per_message_tag_limit: Option<i32>,
 }
 
@@ -26,7 +27,8 @@ impl Default for Tables {
                 username: String::from("@example-change-me:matrix.org"),
                 password: String::from("PASSWORD-HERE"),
             },
-            limits: LimitsFields {
+            filters: FilterFields {
+                message_filters: vec!["".to_string()],
                 per_message_tag_limit: Some(4),
             }
         }
