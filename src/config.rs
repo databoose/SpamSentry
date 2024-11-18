@@ -6,6 +6,12 @@ use std::io::Write;
 pub struct Tables { // all config tables
     pub filters: FilterFields,
     pub login: LoginFields,
+    pub info: InfoFields,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct InfoFields {
+    pub room_id: String,   
 }
 
 #[derive(Serialize, Deserialize)]
@@ -23,13 +29,16 @@ pub struct LoginFields {
 impl Default for Tables {
     fn default() -> Self {
         Tables {
+            filters: FilterFields {
+                message_filters: vec!["".to_string()],
+                per_message_tag_limit: Some(4),
+            },
             login: LoginFields {
                 username: String::from("@example-change-me:matrix.org"),
                 password: String::from("PASSWORD-HERE"),
             },
-            filters: FilterFields {
-                message_filters: vec!["".to_string()],
-                per_message_tag_limit: Some(4),
+            info: InfoFields {
+                room_id: String::from("example-room-id:matrix.org"),
             }
         }
     }

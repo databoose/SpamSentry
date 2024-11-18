@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
        Err(NotFound) => {
             log_info!("Configuration file not found, creating one in directory of executable...");
             config::write_config_defaults()?;
-            log_info!("Configuration file created in : {}", path.display());
+            log_info!("Default configuration file created in : {} , you will have to configure it.", path.display());
             print!("");
             OpenOptions::new().read(true).open("config.toml")?
         },
@@ -38,14 +38,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
     let tables: config::Tables = from_str(&contents)?; //accessible struct for values
-    //println!("{:?}", tables.limits.per_message_tag_limit);
-    //println!("{:?}", tables.login.username);
     println!("{:?}", tables.filters.message_filters);
 
     if tables.login.username == "@example-change-me:matrix.org" && 
        tables.login.password == "PASSWORD-HERE" {
             log_error!("Login credentials in the configuration file {}/config.toml are not set, please configure them.", path.display());
             process::exit(0x0100);
+    }
+
+    if tables.info.room_id == "example-room-id:matrix.org" {
+        log_error!("Room ID for automatic moderation is not set in the configuration file {}/config.toml, please configure it.", path.display());
     }
 
     let homeserver_url = Url::parse(&format!("https://{}", tables.login.username.split(':').nth(1).unwrap()))?;
@@ -64,12 +66,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     client.add_event_handler(|ev: SyncRoomMessageEvent, room: Room| async move {
         if let SyncRoomMessageEvent::Original(orig) = ev { // gets the Original 
             if let MessageType::Text(text_content) = orig.content.msgtype {
-                log_debug!("Message received\n");
-                log_debug!("Room name : {:?}", room.name().unwrap_or("None (Direct Message)".to_string()));
-                log_debug!("Room ID : {:?},", room.room_id());
-                
-                log_debug!("Sender: {}", orig.sender.to_string());
-                log_debug!("Body: {}", text_content.body);
+                if tables.info.room_id == room.room_id().to_string() {
+                    println!("---");
+                    log_debug!("Message received\n");
+                    log_debug!("Room name : {:?}", room.name().unwrap_or("None (Direct Message)".to_string()));
+                    log_debug!("Room ID : {:?},", room.room_id());
+                    
+                    log_debug!("Sender: {}", orig.sender.to_string());
+                    log_debug!("Body: {}", text_content.body);
+                    println!("\n");
+                }
             }
             else {
                 log_error!("SyncRoomMessageEvent::Original doesn't contain a MessageType::Text");
