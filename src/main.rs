@@ -1,25 +1,16 @@
 use std::fs::OpenOptions;
 use std::io::Read;
-use std::fs::write;
-use std::path::Path;
 use std::env;
 use std::process;
 
-use matrix_sdk::ruma::api::client::session;
-use matrix_sdk::HttpError;
 use url::Url;
 use toml::from_str;
 use log_x::{loggers::{ global_logger::DefaultLoggerTrait, log_levels::LogLevel }, 
                        timestamp, log_info, log_error, log_warn, log_debug, Logger};
 mod config;
 
-use matrix_sdk::matrix_auth::MatrixSession;
-use matrix_sdk::matrix_auth::MatrixSessionTokens;
-use matrix_sdk::SessionMeta;
 use matrix_sdk::{
     config::SyncSettings,
-    ruma::device_id,
-    ruma::user_id,
     ruma::events::room::message::{MessageType, SyncRoomMessageEvent},
     Client, Room,
 };
@@ -56,9 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let homeserver_url = Url::parse(&format!("https://{}", tables.login.username.split(':').nth(1).unwrap()))?;
     let client = Client::new(homeserver_url).await?;
-
-    
-    match client.matrix_auth().login_username(&tables.login.username, &tables.login.password).send().await {
+    match client.matrix_auth().login_username(&tables.login.username, &tables.login.password).device_id("SPAMSENTRY00").send().await {
         Ok(_) => {
             log_info!("Logged in as {}", &tables.login.username);
         }
@@ -70,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     client.add_event_handler(|ev: SyncRoomMessageEvent, room: Room| async move {
         println!("---");
-        if let SyncRoomMessageEvent::Original(orig) = ev { // gets the Original 
+        if let SyncRoomMessageEvent::Original(orig) = ev { // gets the Original from the SyncRoomMessageEvent
             if let MessageType::Text(text_content) = orig.content.msgtype {
                 if tables.info.room_id == room.room_id().to_string() {
                     println!("---");
@@ -83,8 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("\n");
                 }
 
-                let substr_match = tables.filters.message_filters.iter().any(|s| text_content.body.contains(s));
-                if substr_match {
+                if tables.filters.message_filters.iter().any(|s| text_content.body.contains(s)) {
                     println!("Banning user {}", orig.sender.to_string());
                     match room.ban_user(&orig.sender, None).await {
                         Ok(_) => {
